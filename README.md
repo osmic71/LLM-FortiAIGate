@@ -67,14 +67,21 @@ After import, confirm the parser is correctly loaded:
 
    | Field Name | Type | Description |
    |---|---|---|
-   | `type` | string | Log type identifier (e.g., `traffic`, `event`) |
-   | `subtype` | string | Log subtype (e.g., `forward`, `block`) |
-   | `action` | string | Policy action applied |
-   | `srcip` / `dstip` | ip | Source and destination IP addresses |
-   | `ai_model` | string | AI model name targeted by the request |
-   | `prompt_category` | string | Classification of the LLM prompt |
-   | `policy_uuid` | string | UUID of the matching AI Guard policy |
-   | `severity` | string | Event severity level |
+   | `date_time` | datetime | Timestamp of the log event |
+   | `data_sourcetype` | string | Log source identifier (value: `FortiAIGate`) |
+   | `event_profile` | string | AI Flow name (e.g., `flow_fortiaigate`) |
+   | `event_policy` | string | AI Guard policy matched (e.g., `default_ollama`) |
+   | `event_type` | string | Log event type (e.g., `TRAFFIC`) |
+   | `srcip` | ip | Source IP address of the request |
+   | `event_message` | string | Full prompt or message content sent to the LLM |
+   | `event_tags` | string | Tags associated with the event |
+   | `http_response_body` | string | Response body returned by the LLM |
+   | `threat_type` | string | Threat classification detected (e.g., prompt injection, DLP) |
+   | `event_status` | string | Processing status of the event |
+   | `event_action` | string | Action taken by the policy (e.g., `allow`, `block`) |
+   | `event_source` | string | Origin source of the log event |
+   | `application_service` | string | Backend AI service targeted |
+   | `event_count` | integer | Number of aggregated events |
 
 ---
 
@@ -112,14 +119,60 @@ Associating a parser to a device is a **two-part process**: the device must firs
 The selected device will now use the **FortiAIGate Log Parser** to normalize all incoming syslog data.
 
 ---
+## Step 6 — Validate Log Ingestion and Create a Custom View
 
-## Step 6 — Validate Log Ingestion
+### Part A — Verify Log Parsing
 
-1. Go to **Log View → Logs → Fortinet Logs** (or the relevant ADOM).
-2. Confirm that logs are being parsed and that custom fields such as `ai_model`, `prompt_category`, and `policy_uuid` are populating correctly.
-3. Run a test query to verify field resolution:
+1. Navigate to **Log View** and select the ADOM where the FortiAIGate device was authorized.
+2. In the device tree on the left panel, select the syslog source (e.g., `SYSLOG-ACD4218E`).
+3. In the filter bar (Text Mode), apply the following filter to scope logs to FortiAIGate:
 
    ```
    devname="FortiAIGate"
    ```
 
+4. Confirm that logs are displayed and that fields such as `Event Profile`, `Event Policy`, `Event Type`, `Source IP`, and `Event Message` are populating correctly.
+
+> ⚠️ If no logs appear or fields are empty, revisit the parser assignment in Step 5 and confirm the device is forwarding logs in the expected format.
+
+---
+
+### Part B — Create a Custom View
+
+A Custom View saves the filter and column layout as a persistent view for ongoing FortiAIGate AI traffic monitoring.
+
+1. In **Log View**, click **Custom View** in the top toolbar, then select **New Custom View**.
+2. Name the view:
+
+   ```
+   FortiAIGate - AI Traffic
+   ```
+
+3. Set the filter to:
+
+   ```
+   data_sourcetype="FortiAIGate"
+   ```
+
+4. Click the **Column Settings** icon (gear) and enable the following columns in order:
+
+   | # | Column Label | Field Key |
+   |---|---|---|
+   | 1 | Date/Time | `date_time` |
+   | 2 | Data Source Type | `data_sourcetype` |
+   | 3 | Event Profile | `event_profile` |
+   | 4 | Event Policy | `event_policy` |
+   | 5 | Event Type | `event_type` |
+   | 6 | Source IP | `srcip` |
+   | 7 | Event Message | `event_message` |
+   | 8 | Event Tags | `event_tags` |
+   | 9 | HTTP Response Body | `http_response_body` |
+   | 10 | Threat Type | `threat_type` |
+   | 11 | Event Status | `event_status` |
+   | 12 | Event Action | `event_action` |
+   | 13 | Event Source | `event_source` |
+   | 14 | Application Service | `application_service` |
+   | 15 | Event Count | `event_count` |
+
+5. Arrange columns in the order above using drag-and-drop.
+6. Click **Save**. The view will appear in the left panel under **Log View** for quick access.
